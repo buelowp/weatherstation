@@ -8,6 +8,8 @@
 #ifndef GEIGER_POCKETGEIGER_H_
 #define GEIGER_POCKETGEIGER_H_
 
+#include <cstddef>
+#include <cmath>
 #include <wiringPi.h>
 
 #ifndef HISTORY_LENGTH
@@ -22,7 +24,7 @@ public:
 	PocketGeiger(int, int);
 	virtual ~PocketGeiger();
 
-	bool setup();
+	void setup();
 	void loop();
     /* Integration time of traced radiation count (in milliseconds),
      * grows gradually to HISTORY_LENGTH * HISTORY_UNIT * 1000. */
@@ -50,7 +52,7 @@ public:
      * is detected. */
     void registerNoiseCallback(void (*callback)(void));
 
-private:
+protected:
     // History of count rates.
     unsigned int _countHistory[HISTORY_LENGTH];
     unsigned long previousTime;
@@ -65,8 +67,6 @@ private:
     int _signPin;
     int _noisePin;
     // User callbacks.
-    void (*_radiationCallback)(void);
-    void (*_noiseCallback)(void);
     // function to attach the interrupt handler
     void setupInterrupt();
     // radiation count used in interrupt routine
@@ -74,9 +74,6 @@ private:
     // noise count used in interrupt routine
     static int volatile _noiseCount;
     // interrupt handler
-    static void _onRadiationHandler();
-    static void _onNoiseHandler();
-
 };
 
 #endif /* GEIGER_POCKETGEIGER_H_ */

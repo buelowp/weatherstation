@@ -9,9 +9,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <wiriginPi.h>
-#include "DS18B20.h"
-#include "PocketGeiger.h"
-#include "tsl2561.h"
+#include "ds18b20/DS18B20.h"
+#include "geiger/PocketGeiger.h"
+#include "tsl2561/tsl2561.h"
 
 void *tsl;
 DS18B20 ds18b20_1;
