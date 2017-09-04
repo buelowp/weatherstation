@@ -5,9 +5,9 @@
  *      Author: pete
  */
 
-#include "DS18B20.h"
-#include "PocketGeiger.h"
-#include "tsl2561.h"
+#include "ds18b20/DS18B20.h"
+#include "geiger/PocketGeiger.h"
+#include "tsl2561/tsl2561.h"
 
 int main(int argc, char *argv[])
 {

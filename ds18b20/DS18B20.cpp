@@ -9,19 +9,17 @@
 
 DS18B20::DS18B20()
 {
-	m_device = NULL;
 }
 
 DS18B20::~DS18B20()
 {
-	m_device->close();
-	delete m_device;
+	m_device.close();
 }
 
 bool DS18B20::open(const char *file)
 {
-	m_device = new std::ifstream(file);
-	if (!m_device->is_open())
+	m_device.open(file);
+	if (!m_device.is_open())
 		return false;
 
 	return true;
@@ -29,22 +27,22 @@ bool DS18B20::open(const char *file)
 
 void DS18B20::close()
 {
-	m_device->close();
+	m_device.close();
 }
 
-void DS18B20::read()
+bool DS18B20::read()
 {
 	std::string results;
 	char *buff;
 	int length = 0;
 	int index = 0;
 
-    m_device->seekg(0, m_device->end);
-    length = m_device->tellg();
-    m_device->seekg(0, m_device->beg);
+    m_device.seekg(0, m_device.end);
+    length = m_device.tellg();
+    m_device.seekg(0, m_device.beg);
 
     buff = new char[length];
-    m_device->read(buff, length);
+    m_device.read(buff, length);
     results = buff;
 
     if ((index = results.find("t=")) != std::string::npos) {

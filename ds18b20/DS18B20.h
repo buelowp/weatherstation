@@ -9,6 +9,7 @@
 #define DS18B20_DS18B20_H_
 
 #include <iostream>
+#include <fstream>
 #include <string>
 
 class DS18B20 {
@@ -23,7 +24,7 @@ public:
 	void close();
 
 private:
-	std::ifstream *m_device;
+	std::ifstream m_device;
 	float m_value;
 };
 

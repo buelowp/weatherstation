@@ -7,15 +7,15 @@
 
 #include "PocketGeiger.h"
 
-int volatile RadiationWatch::_radiationCount = 0;
-int volatile RadiationWatch::_noiseCount = 0;
+int volatile PocketGeiger::_radiationCount = 0;
+int volatile PocketGeiger::_noiseCount = 0;
 
-void RadiationWatch::_onRadiationHandler()
+void _onRadiationHandler()
 {
 	_radiationCount++;
 }
 
-void RadiationWatch::_onNoiseHandler()
+void _onNoiseHandler()
 {
 	_noiseCount++;
 }
@@ -62,12 +62,10 @@ void PocketGeiger::loop()
 	// Process radiation dose if the process period has elapsed.
 	unsigned long currentTime = millis();
 	if (currentTime - previousTime >= PROCESS_PERIOD) {
-		noInterrupts();
 		int currentCount = _radiationCount;
 		int currentNoiseCount = _noiseCount;
 		_radiationCount = 0;
 		_noiseCount = 0;
-		interrupts();
 
 		if (currentNoiseCount == 0) {
 			// Store count log.
@@ -143,7 +141,7 @@ double PocketGeiger::uSvh()
 double PocketGeiger::uSvhError()
 {
 	double min = integrationTime() / 60000.0;
-	return (min > 0) ? sqrt(radiationCount()) / min / kAlpha : 0;
+	return (min > 0) ? std::sqrt(radiationCount()) / min / kAlpha : 0;
 }
 
 void PocketGeiger::setupInterrupt()
