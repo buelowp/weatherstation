@@ -13,6 +13,10 @@
  * 
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TSL2561_I2C_ADDR_LOW 0x29
 #define TSL2561_I2C_ADDR_DEFAULT 0x39
 #define TSL2561_I2C_ADDR_HIGH 0x49
@@ -44,3 +48,6 @@ void tsl2561_luminosity(void *_tsl, int *visible, int *ir);
 void tsl2561_enable_autogain(void *_tsl);
 void tsl2561_disable_autogain(void *_tsl);	
 
+#ifdef __cplusplus
+}
+#endif

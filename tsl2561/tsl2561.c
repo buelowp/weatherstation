@@ -1,5 +1,5 @@
 /*
- * @author 	Alexander Rüedlinger <a.rueedlinger@gmail.com>
+ * @author 	Alexander Rï¿½edlinger <a.rueedlinger@gmail.com>
  * @date 	22.02.2015
  * 
  * A driver written in C for the sensor TSL2561.
@@ -29,6 +29,9 @@
 #include <time.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Define debug function.
@@ -742,3 +745,7 @@ unsigned long tsl2561_compute_lux(void *_tsl, int ch0, int ch1) {
 
 	return lux;		
 }
+
+#ifdef __cplusplus
+}
+#endif
