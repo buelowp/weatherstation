@@ -10,35 +10,39 @@
 int volatile PocketGeiger::_radiationCount = 0;
 int volatile PocketGeiger::_noiseCount = 0;
 
-void _onRadiationHandler()
+void PocketGeiger::_onRadiationHandler()
 {
-	_radiationCount++;
+	PocketGeiger::instance()._radiationCount++;
 }
 
-void _onNoiseHandler()
+void PocketGeiger::_onNoiseHandler()
 {
-	_noiseCount++;
+	PocketGeiger::instance()._noiseCount++;
 }
 
-PocketGeiger::PocketGeiger(int sigPin, int noisePin) : _signPin(sigPin), _noisePin(noisePin)
+PocketGeiger::PocketGeiger()
 {
-	  previousTime = 0;
-	  previousHistoryTime = 0;
-	  _count = 0;
-	  historyIndex = 0;
-	  historyLength = 0;
-	  _radiationCallback = NULL;
-	  _noiseCallback = NULL;
+	previousTime = 0;
+	previousHistoryTime = 0;
+	_count = 0;
+	historyIndex = 0;
+	historyLength = 0;
+	_signPin = 0;
+	_noisePin = 0;
+	_noiseCallback = NULL;
+	_radiationCallback = NULL;
 
-	  wiringPiSetupGpio();
+	wiringPiSetupGpio();
 }
 
 PocketGeiger::~PocketGeiger()
 {
 }
 
-void PocketGeiger::setup()
+void PocketGeiger::setup(int sig, int noise)
 {
+	_signPin = sig;
+	_noisePin = noise;
 	pinMode(_signPin, INPUT);
 	pinMode(_noisePin, INPUT);
 	pullUpDnControl(_signPin, PUD_UP);
@@ -146,6 +150,6 @@ double PocketGeiger::uSvhError()
 
 void PocketGeiger::setupInterrupt()
 {
-	wiringPiISR(_signPin, INT_EDGE_FALLING, _onRadiationHandler());
-	wiringPiISR(_noisePin, INT_EDGE_FALLING, _onNoiseHandler());
+	wiringPiISR(_signPin, INT_EDGE_FALLING, _onRadiationHandler);
+	wiringPiISR(_noisePin, INT_EDGE_FALLING, _onNoiseHandler);
 }
