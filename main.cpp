@@ -8,7 +8,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
-#include <wiriginPi.h>
+#include <unistd.h>
+#include <wiringPi.h>
 #include "ds18b20/DS18B20.h"
 #include "geiger/PocketGeiger.h"
 #include "tsl2561/tsl2561.h"
