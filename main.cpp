@@ -61,9 +61,10 @@ void runtime()
 {
 
 	piThreadCreate(luxThread);
+	piThreadCreate(tempThread);
 
 	while (1) {
-		sleep(1);
+		sleep(1000);
 	}
 }
 
