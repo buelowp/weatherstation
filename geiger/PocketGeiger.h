@@ -10,7 +10,7 @@
 
 #include <cstddef>
 #include <cmath>
-#include <wiringPi.h>
+#include <fastgpioomega2.h>
 
 #ifndef HISTORY_LENGTH
   #define HISTORY_LENGTH 200
@@ -18,6 +18,9 @@
 // Duration of each history array cell (seconds).
 #define HISTORY_UNIT 6
 #define PROCESS_PERIOD 160
+
+#define OMEGA2_INPUT 	0
+#define OMEGA2_OUTPUT 	1
 
 class PocketGeiger {
 public:
@@ -80,6 +83,8 @@ private:
 	// Pin settings.
 	int _signPin;
 	int _noisePin;
+	FastGpioOmega2 m_omega2;
+
 	// User callbacks.
 	// function to attach the interrupt handler
 	void setupInterrupt();
