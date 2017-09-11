@@ -11,21 +11,33 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <map>
+#include <sys/types.h>
+#include <dirent.h>
+
+#define ONE_WIRE_LOCATION	"/sys/bus/w1/devices/"
 
 class DS18B20 {
 public:
 	DS18B20();
 	virtual ~DS18B20();
 
-	bool open(const char*);
-	bool read();
-	float tempC();
-	float tempF();
-	void close();
+	int findDevices();
+	int deviceCount();
+	float tempCByName(std::string&);
+	float tempFByName(std::string&);
+	float averageTempFForAllDevices();
+	float averageTempCForAllDevices();
 
 private:
-	std::ifstream m_device;
-	float m_value;
+	bool read(std::string&, std::string&);
+	float averageTempForAllDevices();
+
+	std::map<std::string, std::string> m_devices;
+	std::map<std::string, float> m_lastResult;
+	std::string m_busMasterPath;
+	std::string m_oneWireFullPath;
+	int m_deviceCount();
 };
 
 #endif /* DS18B20_DS18B20_H_ */
