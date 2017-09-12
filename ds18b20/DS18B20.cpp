@@ -9,7 +9,7 @@
 
 DS18B20::DS18B20()
 {
-	m_oneWireFullPath(ONE_WIRE_LOCATION);
+	m_oneWireFullPath = ONE_WIRE_LOCATION;
 }
 
 DS18B20::~DS18B20()
@@ -43,7 +43,7 @@ float DS18B20::tempCByName(std::string &device)
 {
 	auto path = m_devices.find(device);
 
-	if (!path == m_devices.end()) {
+	if (path != m_devices.end()) {
 		if (read(path->first, path->second)) {
 			return (m_lastResult[path->first] / 1000);
 		}
@@ -57,7 +57,7 @@ float DS18B20::tempFByName(std::string &device)
 {
 	auto path = m_devices.find(device);
 
-	if (!path == m_devices.end()) {
+	if (path != m_devices.end()) {
 		if (read(path->first, path->second)) {
 			return ((m_lastResult[path->first] / 1000) * 9 / 5 + 32);
 		}
@@ -72,7 +72,7 @@ float DS18B20::averageTempFForAllDevices()
 	return ((averageTempForAllDevices() / 1000) * 9 / 5 + 32);
 }
 
-float DS18B20::averageTempFForAllDevices()
+float DS18B20::averageTempCForAllDevices()
 {
 
 	return (averageTempForAllDevices() / 1000);
@@ -97,7 +97,7 @@ float DS18B20::averageTempForAllDevices()
 	return average;
 }
 
-bool DS18B20::read(std::string &device, std::string &path)
+bool DS18B20::read(std::string device, std::string path)
 {
 	return true;
 }

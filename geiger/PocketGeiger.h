@@ -10,6 +10,18 @@
 
 #include <cstddef>
 #include <cmath>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <signal.h>
+#include <time.h>
+
 #include <fastgpioomega2.h>
 
 #ifndef HISTORY_LENGTH
@@ -21,6 +33,7 @@
 
 #define OMEGA2_INPUT 	0
 #define OMEGA2_OUTPUT 	1
+#define SIG_GPIO_IRQ	42
 
 class PocketGeiger {
 public:
@@ -70,6 +83,8 @@ private:
         void operator=(PocketGeiger const&); // Don't implement
 
 	virtual ~PocketGeiger();
+	unsigned long millis();
+
 	// History of count rates.
 	unsigned int _countHistory[HISTORY_LENGTH];
 	unsigned long previousTime;
@@ -83,11 +98,12 @@ private:
 	// Pin settings.
 	int _signPin;
 	int _noisePin;
+	unsigned long m_millis;
 	FastGpioOmega2 m_omega2;
 
 	// User callbacks.
 	// function to attach the interrupt handler
-	void setupInterrupt();
+	bool setupInterrupt();
 	static void _onRadiationHandler();
 	static void _onNoiseHandler();
 };

@@ -25,9 +25,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <time.h>
-#endif
+#include <onion-i2c.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -208,7 +209,7 @@ void tsl2561_init_error_cleanup(void *_tsl);
  */
 uint8_t tsl2561_write_byte_data(void *_tsl, uint8_t reg, uint8_t value) {
 	tsl2561_t *tsl = TO_TSL(_tsl);
-	uint8_t data = i2c_smbus_write_byte_data(tsl->file, reg, value);
+	uint8_t data = i2c_smbus_write_byte_data(0, reg, value);
 	
 	DEBUG("device %#x: write %#x to register %#x\n", tsl->address, value, reg);
 	
@@ -748,4 +749,6 @@ unsigned long tsl2561_compute_lux(void *_tsl, int ch0, int ch1) {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

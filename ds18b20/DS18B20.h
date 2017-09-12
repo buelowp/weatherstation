@@ -30,7 +30,7 @@ public:
 	float averageTempCForAllDevices();
 
 private:
-	bool read(std::string&, std::string&);
+	bool read(std::string, std::string);
 	float averageTempForAllDevices();
 
 	std::map<std::string, std::string> m_devices;

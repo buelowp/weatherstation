@@ -10,6 +10,7 @@
 int volatile PocketGeiger::_radiationCount = 0;
 int volatile PocketGeiger::_noiseCount = 0;
 
+/*
 void PocketGeiger::_onRadiationHandler()
 {
 	PocketGeiger::instance()._radiationCount++;
@@ -18,6 +19,14 @@ void PocketGeiger::_onRadiationHandler()
 void PocketGeiger::_onNoiseHandler()
 {
 	PocketGeiger::instance()._noiseCount++;
+}
+*/
+
+extern "C" {
+	void irq_handler(int n, siginfo_t *info, void *unused)
+	{
+		printf("%s: Received value 0x%X\n", __PRETTY_FUNCTION__, info->si_int);
+	}
 }
 
 PocketGeiger::PocketGeiger()
@@ -31,22 +40,39 @@ PocketGeiger::PocketGeiger()
 	_noisePin = 0;
 	_noiseCallback = NULL;
 	_radiationCallback = NULL;
-
-	wiringPiSetupGpio();
+	m_millis = millis();
 }
 
 PocketGeiger::~PocketGeiger()
 {
 }
 
+unsigned long PocketGeiger::millis()
+{
+    struct timeval te;
+    gettimeofday(&te, NULL); // get current time
+    unsigned long milliseconds = te.tv_sec*1000UL + te.tv_usec/1000; // caculate milliseconds
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds - m_millis;
+}
+
 void PocketGeiger::setup(int sig, int noise)
 {
 	_signPin = sig;
 	_noisePin = noise;
-	pinMode(_signPin, INPUT);
-	pinMode(_noisePin, INPUT);
-	pullUpDnControl(_signPin, PUD_UP);
-	pullUpDnControl(_noisePin, PUD_UP);
+	/*
+	 * The Omega2 does not have internal resistors
+	 * These two pins MUST have 4.7k PullUps externally
+	 * to work with this chip.
+	 *
+	 * Preferred pins for Omega2 would be
+	 * GPIO 18
+	 * GPIO 19
+	 * GPIO 4
+	 * GPIO 5
+	 */
+	m_omega2.SetDirection(_signPin, OMEGA2_INPUT);
+	m_omega2.SetDirection(_noisePin, OMEGA2_INPUT);
 
 	// Initialize _countHistory[].
 	for(int i = 0; i < HISTORY_LENGTH; i++)
@@ -148,8 +174,42 @@ double PocketGeiger::uSvhError()
 	return (min > 0) ? std::sqrt(radiationCount()) / min / kAlpha : 0;
 }
 
-void PocketGeiger::setupInterrupt()
+bool PocketGeiger::setupInterrupt()
 {
-	wiringPiISR(_signPin, INT_EDGE_FALLING, _onRadiationHandler);
-	wiringPiISR(_noisePin, INT_EDGE_FALLING, _onNoiseHandler);
+	int fd;
+	char buf[100];
+
+	struct sigaction sig;
+	sig.sa_sigaction = irq_handler;
+	sig.sa_flags = SA_SIGINFO | SA_NODEFER;
+	sigaction(SIG_GPIO_IRQ, &sig, NULL);
+
+	fd=open("/sys/kernel/debug/gpio-irq", O_WRONLY);
+	if(fd < 0)
+	{
+		perror("open");
+		return false;
+	}
+
+	sprintf(buf, "+ %d %i", _signPin, getpid());
+
+	if(write(fd, buf, strlen(buf) + 1) < 0)
+	{
+		perror("write");
+		close(fd);
+		return false;
+	}
+
+	memset(buf, '\0', 100);
+	sprintf(buf, "+ %d %i", _noisePin, getpid());
+
+	if(write(fd, buf, strlen(buf) + 1) < 0)
+	{
+		perror("write");
+		close(fd);
+		return false;
+	}
+
+	close(fd);
+	return true;
 }

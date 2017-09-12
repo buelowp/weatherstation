@@ -8,19 +8,15 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <thread>
 #include <unistd.h>
-#include <wiringPi.h>
 #include "ds18b20/DS18B20.h"
 #include "geiger/PocketGeiger.h"
-#include "tsl2561/tsl2561.h"
-
-void *tsl;
-DS18B20 ds18b20_1;
-DS18B20 ds18b20_2;
+#include "tsl2561/TSL2561.h"
 
 void onRadiation()
 {
-	std::cout << "Wild Gamma Rays are a happenin: " << PocketGeiger::instance().uSvh();
+	std::cout << "Wild Gamma Rays are a happening: " << PocketGeiger::instance().uSvh();
 	std::cout << "uSv/h +/- " << PocketGeiger::instance().uSvhError();
 }
 
@@ -29,39 +25,39 @@ void onNoise()
 	std::cout << "too much noise";
 }
 
-PI_THREAD (luxThread)
+void luxThread()
 {
+	TSL2561 tsl2561(0, TSL2561_INTEGRATION_TIME_13MS);
 	int c;
-	long lux;
+	unsigned long lux;
 
-	if (tsl != NULL) {
-		while (1) {
-			lux = tsl2561_lux(tsl);
-			std::cout << "lux: " << lux;
-			usleep(3 * 1000 * 1000);
-		}
+	tsl2561.enableAutoGain();
+
+	while (1) {
+		lux = tsl2561.lux();
+		usleep(1000 * 1000 * 60);
 	}
 }
 
-PI_THREAD (tempThread)
+void tempThread()
 {
-	ds18b20_1.open("sdlk");
-	ds18b20_2.open("lksd");
+	DS18B20 probes;
+
+	if (probes.findDevices() == 0) {
+		std::cerr << __PRETTY_FUNCTION__ << ": No DS18B20 devices found" << std::endl;
+		return;
+	}
 
 	while (1) {
-		ds18b20_1.read();
-		ds18b20_2.read();
-		std::cout << __PRETTY_FUNCTION__ << ": temp=" << ds18b20_1.tempF();
-		std::cout << __PRETTY_FUNCTION__ << ": temp=" << ds18b20_2.tempF();
-		usleep(1000 * 1000);
+		std::cout << __PRETTY_FUNCTION__ << ": temp=" << probes.averageTempFForAllDevices();
+		usleep(1000 * 1000 * 60);
 	}
 }
 
 void runtime()
 {
-
-	piThreadCreate(luxThread);
-	piThreadCreate(tempThread);
+	std::thread lt(&luxThread);
+	std::thread tt(&tempThread);
 
 	while (1) {
 		sleep(1000);
@@ -72,15 +68,8 @@ int main(int argc, char *argv[])
 {
 	pid_t pid;
 
-	if ((tsl = tsl2561_init(0x39, "/dev/i2c-1")) == NULL) {
-		std::cerr << "Unable to open TSL device";
-	}
-
 	PocketGeiger::instance().registerRadiationCallback(&onRadiation);
 	PocketGeiger::instance().registerNoiseCallback(&onRadiation);
-
-	tsl2561_enable_autogain(tsl);
-	tsl2561_set_integration_time(tsl, TSL2561_INTEGRATION_TIME_13MS);
 
 	pid = fork();
 	if (pid == 0) {
