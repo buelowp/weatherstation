@@ -8,6 +8,7 @@ set (SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 add_subdirectory (ds18b20)
 add_subdirectory (tsl2561)
 add_subdirectory (geiger)
+add_subdirectory (ccs811)
 
 add_library (oniongpio SHARED IMPORTED)
 set_target_properties(oniongpio PROPERTIES IMPORTED_LOCATION "${CMAKE_FIND_TARGET_PATH}/usr/lib/liboniongpio.so"
