@@ -11,9 +11,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <map>
 #include <sys/types.h>
 #include <dirent.h>
+#include <errno.h>
 
 #define ONE_WIRE_LOCATION	"/sys/bus/w1/devices/"
 
@@ -37,7 +39,7 @@ private:
 	std::map<std::string, float> m_lastResult;
 	std::string m_busMasterPath;
 	std::string m_oneWireFullPath;
-	int m_deviceCount();
+	int m_deviceCount;
 };
 
 #endif /* DS18B20_DS18B20_H_ */

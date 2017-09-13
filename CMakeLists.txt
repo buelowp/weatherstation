@@ -25,4 +25,4 @@ set_target_properties(onioni2c PROPERTIES IMPORTED_LOCATION "${CMAKE_FIND_TARGET
 )
 
 add_executable (${PROJECT_NAME} ${SOURCE})
-target_link_libraries (${PROJECT_NAME} -lm oniongpio onionspi onioni2c)
+target_link_libraries (${PROJECT_NAME} -lm -loniongpio -lonionspi -lonioni2c)

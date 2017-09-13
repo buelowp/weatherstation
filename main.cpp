@@ -43,20 +43,23 @@ void tempThread()
 {
 	DS18B20 probes;
 
+	std::cout << __PRETTY_FUNCTION__ << ": Staring temperature monitor thread" << std::endl;
 	if (probes.findDevices() == 0) {
 		std::cerr << __PRETTY_FUNCTION__ << ": No DS18B20 devices found" << std::endl;
 		return;
 	}
+	std::cout << __PRETTY_FUNCTION__ << ": Found " << probes.deviceCount() << " devices" << std::endl;
 
 	while (1) {
-		std::cout << __PRETTY_FUNCTION__ << ": temp=" << probes.averageTempFForAllDevices();
+		float t = probes.averageTempFForAllDevices();
+		std::cout << __PRETTY_FUNCTION__ << ": temp = " << t << std::endl;
 		usleep(1000 * 1000 * 60);
 	}
 }
 
 void runtime()
 {
-	std::thread lt(&luxThread);
+//	std::thread lt(&luxThread);
 	std::thread tt(&tempThread);
 
 	while (1) {
@@ -68,9 +71,10 @@ int main(int argc, char *argv[])
 {
 	pid_t pid;
 
-	PocketGeiger::instance().registerRadiationCallback(&onRadiation);
-	PocketGeiger::instance().registerNoiseCallback(&onRadiation);
-
+	runtime();
+//	PocketGeiger::instance().registerRadiationCallback(&onRadiation);
+//	PocketGeiger::instance().registerNoiseCallback(&onRadiation);
+/*
 	pid = fork();
 	if (pid == 0) {
 		runtime();
@@ -83,5 +87,6 @@ int main(int argc, char *argv[])
 		fclose(stdin);
 		fclose(stderr);
 	}
+	*/
 	exit(0);
 }
