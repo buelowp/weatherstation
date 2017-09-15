@@ -73,13 +73,11 @@ float DS18B20::tempFByName(std::string &device)
 
 float DS18B20::averageTempFForAllDevices()
 {
-	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	return (averageTempForAllDevices() * 9 / 5 + 32);
 }
 
 float DS18B20::averageTempCForAllDevices()
 {
-	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	return averageTempForAllDevices();
 }
 
@@ -88,19 +86,15 @@ float DS18B20::averageTempForAllDevices()
 	float average = 0.0;
 	int count = 0;
 
-	std::cout << __PRETTY_FUNCTION__ << ": Looping " << m_devices.size() << " times" << std::endl;
 	for (auto it: m_devices) {
-		std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
 		if (read(it.first, it.second)) {
 			average += m_lastResult[it.first];
-			std::cout << __PRETTY_FUNCTION__ << ": total = " << average << std::endl;
 			count++;
 		}
 	}
 
 	if (count != 0) {
 		average = average / count;
-		std::cout << __PRETTY_FUNCTION__ << ": calculated average = " << average << std::endl;
 	}
 
 	return average;
@@ -119,7 +113,6 @@ bool DS18B20::read(std::string device, std::string path)
 	float rawValue = 0;
 	size_t pos;
 
-	std::cout << __PRETTY_FUNCTION__ << ": opened path " << w1 << std::endl;
 	while (!file.eof()) {
 		char buff[128];
 		file.getline(buff, 128);
@@ -133,10 +126,6 @@ bool DS18B20::read(std::string device, std::string path)
 		}
 		if ((pos = line.find("t=")) != std::string::npos) {
 			size_t chars = (line.size() - (pos + 2));
-			std::cout << __PRETTY_FUNCTION__ << ": extracting " << chars << " characters" << std::endl;
-			std::cout << __PRETTY_FUNCTION__ << ": line size " << line.size() << std::endl;
-			std::cout << __PRETTY_FUNCTION__ << ": pos " << (pos + 2) << std::endl;
-			std::cout << __PRETTY_FUNCTION__ << ": line: " << line << std::endl;
 			rawValue = std::stof(line.substr(pos + 2, chars));
 			continue;
 		}

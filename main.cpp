@@ -13,6 +13,8 @@
 #include "ds18b20/DS18B20.h"
 #include "geiger/PocketGeiger.h"
 #include "tsl2561/TSL2561.h"
+#include "ccs811/CCS811.h"
+#include "rgbled/RGBLed.h"
 
 void onRadiation()
 {
@@ -52,15 +54,26 @@ void tempThread()
 
 	while (1) {
 		float t = probes.averageTempFForAllDevices();
+		if (t != 0) {
+			RGBLed rgb;
+			rgb.green();
+		}
 		std::cout << __PRETTY_FUNCTION__ << ": temp = " << t << std::endl;
 		usleep(1000 * 1000 * 60);
 	}
+}
+
+void environThread()
+{
+	CCS811 ccs811(7);
+
 }
 
 void runtime()
 {
 //	std::thread lt(&luxThread);
 	std::thread tt(&tempThread);
+	std::thread envt(&environThread);
 
 	while (1) {
 		sleep(1000);
@@ -70,6 +83,9 @@ void runtime()
 int main(int argc, char *argv[])
 {
 	pid_t pid;
+
+	RGBLed rgb;
+	rgb.red();
 
 	runtime();
 //	PocketGeiger::instance().registerRadiationCallback(&onRadiation);
