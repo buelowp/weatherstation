@@ -4,7 +4,15 @@ Provides an Onion.io interface for sensors that are loosely collected into
 weather data. This will be improved with a set of outdoor safe sensors along
 the way.
 
+This code is specific to the Onion, found at http://onion.io. It will not
+compile for other platforms due to the GPIO and i2c access routines that
+use Onion specific libraries and headers. It *could* be ported, but it's not
+something I care that much about today.
+
 ## Requirements
+
+Download the Onion SDK or build it yourself. This is not covered here, and
+should be found from the Onion site directly. 
 
 This code requires the following Onion packages to be available
 
