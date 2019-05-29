@@ -7,40 +7,36 @@
 
 #include "PocketGeiger.h"
 
-int volatile PocketGeiger::_radiationCount = 0;
-int volatile PocketGeiger::_noiseCount = 0;
-
-/*
-void PocketGeiger::_onRadiationHandler()
+PocketGeiger::PocketGeiger(int signal, int noise)
 {
-	PocketGeiger::instance()._radiationCount++;
-}
+    m_previousTime = 0;
+    m_previousHistoryTime = 0;
+    m_count = 0;
+    m_historyIndex = 0;
+    m_historyLength = 0;
+    m_signalPin = signal;
+    m_noisePin = noise;
+    m_millis = millis();
 
-void PocketGeiger::_onNoiseHandler()
-{
-	PocketGeiger::instance()._noiseCount++;
-}
-*/
+    m_signal = new GPIOPin(m_signalPin);
+    m_signalHandler = new Geiger_Pin_Handler_Object(GPIO_IRQ_RISING);
+    m_signal->setDirection(GPIO_INPUT);
+    m_signal->setIrq(GPIO_IRQ_RISING, m_signalHandler, 0);
 
-extern "C" {
-	void irq_handler(int n, siginfo_t *info, void *unused)
-	{
-		printf("%s: Received value 0x%X\n", __PRETTY_FUNCTION__, info->si_int);
-	}
-}
+    m_noise = new GPIOPin(m_noisePin);
+    m_noiseHandler = new Geiger_Pin_Handler_Object(GPIO_IRQ_RISING);
+    m_noise->setDirection(GPIO_INPUT);
+    m_noise->setIrq(GPIO_IRQ_RISING, m_noiseHandler, 0);
 
-PocketGeiger::PocketGeiger()
-{
-	previousTime = 0;
-	previousHistoryTime = 0;
-	_count = 0;
-	historyIndex = 0;
-	historyLength = 0;
-	_signPin = 0;
-	_noisePin = 0;
-	_noiseCallback = NULL;
-	_radiationCallback = NULL;
-	m_millis = millis();
+	for(int i = 0; i < HISTORY_LENGTH; i++)
+		m_countHistory[i] = 0;
+
+	m_count = 0;
+	m_historyIndex = 0;
+	m_historyLength = 0;
+	// Init measurement time.
+	m_previousTime = millis();
+	m_previousHistoryTime = millis();
 }
 
 PocketGeiger::~PocketGeiger()
@@ -56,104 +52,57 @@ unsigned long PocketGeiger::millis()
     return milliseconds - m_millis;
 }
 
-void PocketGeiger::setup(int sig, int noise)
-{
-	_signPin = sig;
-	_noisePin = noise;
-	/*
-	 * The Omega2 does not have internal resistors
-	 * These two pins MUST have 4.7k PullUps externally
-	 * to work with this chip.
-	 *
-	 * Preferred pins for Omega2 would be
-	 * GPIO 18
-	 * GPIO 19
-	 * GPIO 4
-	 * GPIO 5
-	 */
-	m_omega2.SetDirection(_signPin, OMEGA2_INPUT);
-	m_omega2.SetDirection(_noisePin, OMEGA2_INPUT);
-
-	// Initialize _countHistory[].
-	for(int i = 0; i < HISTORY_LENGTH; i++)
-		_countHistory[i] = 0;
-	_count = 0;
-	historyIndex = 0;
-	historyLength = 0;
-	// Init measurement time.
-	previousTime = millis();
-	previousHistoryTime = millis();
-	// Attach interrupt handlers.
-	setupInterrupt();
-}
-
 void PocketGeiger::loop()
 {
 	// Process radiation dose if the process period has elapsed.
 	unsigned long currentTime = millis();
-	if (currentTime - previousTime >= PROCESS_PERIOD) {
-		int currentCount = _radiationCount;
-		int currentNoiseCount = _noiseCount;
-		_radiationCount = 0;
-		_noiseCount = 0;
+
+	if (currentTime - m_previousTime >= PROCESS_PERIOD) {
+		int currentCount = m_signalHandler->getCount();
+		int currentNoiseCount = m_noiseHandler->getCount();
+
+		m_signalHandler->reset();
+		m_noiseHandler->reset();
 
 		if (currentNoiseCount == 0) {
 			// Store count log.
-			_countHistory[historyIndex] += currentCount;
+			m_countHistory[m_historyIndex] += currentCount;
 			// Add number of counts.
-			_count += currentCount;
+			m_count += currentCount;
 		}
 
 		// Shift an array for counting log for each 6 seconds.
-		if (currentTime - previousHistoryTime >= HISTORY_UNIT * 1000) {
-			previousHistoryTime += (unsigned long)(HISTORY_UNIT * 1000);
-			historyIndex = (historyIndex + 1) % HISTORY_LENGTH;
-			if (historyLength < (HISTORY_LENGTH-1)) {
+		if (currentTime - m_previousHistoryTime >= HISTORY_UNIT * 1000) {
+			m_previousHistoryTime += (unsigned long)(HISTORY_UNIT * 1000);
+			m_historyIndex = (m_historyIndex + 1) % HISTORY_LENGTH;
+			if (m_historyLength < (HISTORY_LENGTH - 1)) {
 				// Since, we overwrite the oldest value in the history,
 				// the effective maximum length is HISTORY_LENGTH-1
-				historyLength++;
+				m_historyLength++;
 			}
-			_count -= _countHistory[historyIndex];
-			_countHistory[historyIndex] = 0;
+			m_count -= m_countHistory[m_historyIndex];
+			m_countHistory[m_historyIndex] = 0;
 		}
 
 		// Save time of current process period
-		previousTime = currentTime;
-		// Enable the callbacks.
-		if (_noiseCallback && currentNoiseCount > 0) {
-			_noiseCallback();
-		}
-
-		if (_radiationCallback && currentCount > 0) {
-			_radiationCallback();
-		}
+		m_previousTime = currentTime;
 	}
-}
-
-void PocketGeiger::registerRadiationCallback(void (*callback)(void))
-{
-	_radiationCallback = callback;
-}
-
-void PocketGeiger::registerNoiseCallback(void (*callback)(void))
-{
-	_noiseCallback = callback;
 }
 
 unsigned long PocketGeiger::integrationTime()
 {
-	return (historyLength * HISTORY_UNIT * 1000UL + previousTime - previousHistoryTime);
+	return (m_historyLength * HISTORY_UNIT * 1000UL + m_previousTime - m_previousHistoryTime);
 }
 
 int PocketGeiger::currentRadiationCount()
 {
-	int currentCount = _radiationCount;
+	int currentCount = m_signalHandler->getCount();
 	return currentCount;
 }
 
 unsigned long PocketGeiger::radiationCount()
 {
-	return _count;
+	return m_count;
 }
 
 double PocketGeiger::cpm()
@@ -174,42 +123,3 @@ double PocketGeiger::uSvhError()
 	return (min > 0) ? std::sqrt(radiationCount()) / min / kAlpha : 0;
 }
 
-bool PocketGeiger::setupInterrupt()
-{
-	int fd;
-	char buf[100];
-
-	struct sigaction sig;
-	sig.sa_sigaction = irq_handler;
-	sig.sa_flags = SA_SIGINFO | SA_NODEFER;
-	sigaction(SIG_GPIO_IRQ, &sig, NULL);
-
-	fd=open("/sys/kernel/debug/gpio-irq", O_WRONLY);
-	if(fd < 0)
-	{
-		perror("open");
-		return false;
-	}
-
-	sprintf(buf, "+ %d %i", _signPin, getpid());
-
-	if(write(fd, buf, strlen(buf) + 1) < 0)
-	{
-		perror("write");
-		close(fd);
-		return false;
-	}
-
-	memset(buf, '\0', 100);
-	sprintf(buf, "+ %d %i", _noisePin, getpid());
-
-	if(write(fd, buf, strlen(buf) + 1) < 0)
-	{
-		perror("write");
-		close(fd);
-		return false;
-	}
-
-	close(fd);
-	return true;
-}

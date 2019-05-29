@@ -10,23 +10,23 @@
 #include <cstdio>
 #include <thread>
 #include <unistd.h>
-#include "ds18b20/DS18B20.h"
+#include <vector>
+#include <string>
+#include <sstream>
+
 #include "geiger/PocketGeiger.h"
-#include "tsl2561/TSL2561.h"
-#include "ccs811/CCS811.h"
-#include "rgbled/RGBLed.h"
 
-void onRadiation()
+PocketGeiger *g_pg;
+
+void usage(const char *name)
 {
-	std::cout << "Wild Gamma Rays are a happening: " << PocketGeiger::instance().uSvh();
-	std::cout << "uSv/h +/- " << PocketGeiger::instance().uSvhError();
+    std::cerr << "usage: " << name << " -l <pin:pin> -d" << std::endl;
+    std::cerr << "\t-l <pin:pin> Enable Pocket Geiger counter with signal pin:noise pin" << std::endl;
+    std::cerr << "\tNote, pins must be numeric and colon seperated to work" << std::endl;
+    std::cerr << "\t-d Daemonize the application to run in the background" << std::endl;
 }
 
-void onNoise()
-{
-	std::cout << "too much noise";
-}
-
+#if 0
 void luxThread()
 {
 	TSL2561 tsl2561(0, TSL2561_INTEGRATION_TIME_13MS);
@@ -68,41 +68,70 @@ void environThread()
 	CCS811 ccs811(7);
 
 }
+#endif
 
 void runtime()
 {
-//	std::thread lt(&luxThread);
-	std::thread tt(&tempThread);
-	std::thread envt(&environThread);
+    while (1) {
+        if(g_pg)
+            g_pg->loop();
+    }
+}
 
-	while (1) {
-		sleep(1000);
-	}
+int split_args(const char *input, std::vector<int> &result)
+{
+    std::istringstream f(input);
+    std::string s;    
+    while (getline(f, s, ':')) {
+        std::cout << s << std::endl;
+        result.push_back(std::stoi(s));
+    }
+    return result.size();
 }
 
 int main(int argc, char *argv[])
 {
 	pid_t pid;
+    std::vector<int> args;
+    g_pg = nullptr;
+    bool daemonize = false;
+    int c;
 
-	RGBLed rgb;
-	rgb.red();
+    while ((c = getopt (argc, argv, "dl:")) != -1) {
+        switch (c) {
+        case 'l':
+            if (split_args(optarg, args) == 2)
+                g_pg = new PocketGeiger(args.at(0), args.at(1));     
+            else
+                usage(argv[0]);
 
-	runtime();
-//	PocketGeiger::instance().registerRadiationCallback(&onRadiation);
-//	PocketGeiger::instance().registerNoiseCallback(&onRadiation);
-/*
-	pid = fork();
-	if (pid == 0) {
-		runtime();
-	}
-	else if (pid < 0) {
-		std::cerr << "fork failed";
-	}
-	else {
-		fclose(stdout);
-		fclose(stdin);
-		fclose(stderr);
-	}
-	*/
+            break;
+        case 'd':
+            daemonize = true;
+            break;
+        default:
+            usage(argv[0]);
+            exit(0);
+        }
+    }
+
+    if (daemonize) {
+    	pid = fork();
+    	if (pid == 0) {
+    		runtime();
+    	}
+    	else if (pid < 0) {
+    		std::cerr << "fork failed";
+    	}
+    	else {
+    		fclose(stdout);
+    		fclose(stdin);
+    		fclose(stderr);
+    	}
+    }
+    else {
+        runtime();
+    }
+
 	exit(0);
 }
