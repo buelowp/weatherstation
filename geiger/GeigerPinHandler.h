@@ -8,16 +8,16 @@ class Geiger_Pin_Handler_Object : public GPIO_Irq_Handler_Object {
 public:
     Geiger_Pin_Handler_Object(GPIO_Irq_Type type) {
         irqType = type;
-	m_count = 0;
+        m_count = 0;
     }
 
     void handleIrq(int pinNum, GPIO_Irq_Type type) {
         if (type == irqType) {
-	    m_count++;
-	}
+        	m_count++;
+        }
     }
 
-    unsigned int getCount() { return m_count; }
+    unsigned int count() { return m_count; }
     unsigned int reset() { m_count = 0; }
     
 private:

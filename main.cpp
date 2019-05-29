@@ -24,6 +24,7 @@ void usage(const char *name)
     std::cerr << "\t-l <pin:pin> Enable Pocket Geiger counter with signal pin:noise pin" << std::endl;
     std::cerr << "\tNote, pins must be numeric and colon seperated to work" << std::endl;
     std::cerr << "\t-d Daemonize the application to run in the background" << std::endl;
+    exit(-1);
 }
 
 #if 0
@@ -75,16 +76,23 @@ void runtime()
     while (1) {
         if(g_pg)
             g_pg->loop();
+
+        sleep(1);
     }
 }
 
-int split_args(const char *input, std::vector<int> &result)
+int split_args(const char *name, const char *input, std::vector<int> &result)
 {
     std::istringstream f(input);
     std::string s;    
     while (getline(f, s, ':')) {
-        std::cout << s << std::endl;
-        result.push_back(std::stoi(s));
+        try {
+        	result.push_back(std::stoi(s));
+        }
+        catch (std::exception &e) {
+        	std::cerr << e.what();
+        	usage(name);
+        }
     }
     return result.size();
 }
@@ -100,7 +108,7 @@ int main(int argc, char *argv[])
     while ((c = getopt (argc, argv, "dl:")) != -1) {
         switch (c) {
         case 'l':
-            if (split_args(optarg, args) == 2)
+            if (split_args(argv[0], optarg, args) == 2)
                 g_pg = new PocketGeiger(args.at(0), args.at(1));     
             else
                 usage(argv[0]);
@@ -111,7 +119,6 @@ int main(int argc, char *argv[])
             break;
         default:
             usage(argv[0]);
-            exit(0);
         }
     }
 

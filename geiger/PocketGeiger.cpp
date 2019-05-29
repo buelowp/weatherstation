@@ -43,6 +43,12 @@ PocketGeiger::~PocketGeiger()
 {
 }
 
+/**
+ * \func unsigned long PocketGeiger::millis()
+ * \return Returns an unsigned long pertaining to the total number of elapsed millis since we started
+ * \details This is a rough replacement for arduino millis(). We set an initial millis value when the class
+ * is instantiated, and then we simply calculate the delta between start and now and return it.
+ */
 unsigned long PocketGeiger::millis()
 {
     struct timeval te;
@@ -52,14 +58,20 @@ unsigned long PocketGeiger::millis()
     return milliseconds - m_millis;
 }
 
+/**
+ * \func void PocketGeiger::loop()
+ * \details This is the calculation loop for determining our radiation data. It should be called
+ * about everr second or so. Note that there is a 2-3 minute warmup for this device, so expect it
+ * to take a while to get data accurately.
+ */
 void PocketGeiger::loop()
 {
 	// Process radiation dose if the process period has elapsed.
 	unsigned long currentTime = millis();
 
 	if (currentTime - m_previousTime >= PROCESS_PERIOD) {
-		int currentCount = m_signalHandler->getCount();
-		int currentNoiseCount = m_noiseHandler->getCount();
+		int currentCount = m_signalHandler->count();
+		int currentNoiseCount = m_noiseHandler->count();
 
 		m_signalHandler->reset();
 		m_noiseHandler->reset();
@@ -96,8 +108,7 @@ unsigned long PocketGeiger::integrationTime()
 
 int PocketGeiger::currentRadiationCount()
 {
-	int currentCount = m_signalHandler->getCount();
-	return currentCount;
+	return m_signalHandler->count();
 }
 
 unsigned long PocketGeiger::radiationCount()

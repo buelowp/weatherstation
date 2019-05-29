@@ -33,12 +33,19 @@
 #define HISTORY_UNIT 6
 #define PROCESS_PERIOD 160
 
+/**
+ * \class PocketGeiger
+ *
+ * \details Provides access to a 2 pin interrupt driven
+ * geiger counter. It gives access to variations on the
+ * data to provide different ways of looking at what the
+ * sensor is telling us
+ */
 class PocketGeiger {
 public:
 	PocketGeiger(int, int);
 	virtual ~PocketGeiger();
 
-	static constexpr double kAlpha = 53.032;
 
 	void loop();
 	unsigned long integrationTime();
@@ -49,17 +56,20 @@ public:
 	double uSvhError();
 
 private:
+	static constexpr double kAlpha = 53.032;
+
 	unsigned long millis();
 
 	unsigned int m_countHistory[HISTORY_LENGTH];
 	unsigned long m_previousTime;
 	unsigned long m_previousHistoryTime;
 	unsigned long m_count;
+	unsigned long m_millis;
 	int m_historyIndex;
 	int m_historyLength;
 	int m_signalPin;
 	int m_noisePin;
-	unsigned long m_millis;
+
 	Geiger_Pin_Handler_Object *m_signalHandler;
 	Geiger_Pin_Handler_Object *m_noiseHandler;
 	GPIOPin *m_signal;
