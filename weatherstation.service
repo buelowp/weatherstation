@@ -1,0 +1,13 @@
+# Weather station startup
+[Unit]
+Description=weatherstation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/home/pi/weatherstation.py
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+Alias=weatherstation
